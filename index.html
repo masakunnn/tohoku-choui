@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+%<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -364,7 +364,7 @@
 
 <script>
     const CONFIG = {
-        fixedWidth: 2172,
+        marginRatio: 0.96,
         aspectRatio: 16/9,
         animDuration: 450,
         fontName: "'UD-ShinGo-DeBold', 'BIZUDPGothic-Bold', sans-serif"
@@ -406,7 +406,7 @@
     let isAnimating = false; // 拡大中かどうかを判定するフラグ
 
     function expandCard(el) {
-        isAnimating = true; // アニメーション開始
+        isAnimating = true;
         expandedElement = el;
         const scrim = document.getElementById('scrim');
         const rect = el.getBoundingClientRect();
@@ -414,6 +414,17 @@
         placeholderElement = document.createElement('div');
         placeholderElement.className = 'placeholder';
         el.parentNode.insertBefore(placeholderElement, el);
+
+        // 画面サイズに基づいた動的なサイズ計算
+        const viewportWidth = document.documentElement.clientWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // 画面の90%の幅、もしくは高さの90%に収まる幅の、小さい方を採用
+        let finalWidth = viewportWidth * CONFIG.marginRatio;
+        if (finalWidth / CONFIG.aspectRatio > viewportHeight * CONFIG.marginRatio) {
+            finalWidth = viewportHeight * CONFIG.marginRatio * CONFIG.aspectRatio;
+        }
+        const finalHeight = finalWidth / CONFIG.aspectRatio;
 
         el.style.transition = 'none';
         el.style.position = 'fixed';
@@ -433,12 +444,6 @@
             requestAnimationFrame(() => {
                 scrim.style.opacity = '1';
                 
-                const finalWidth = CONFIG.fixedWidth;
-                const finalHeight = finalWidth / CONFIG.aspectRatio;
-                
-                const viewportWidth = document.documentElement.clientWidth;
-                const viewportHeight = window.innerHeight;
-
                 el.style.transition = 'all 0.45s cubic-bezier(0.16, 1, 0.3, 1)'; 
                 el.style.top = (viewportHeight - finalHeight) / 2 + 'px';
                 el.style.left = (viewportWidth - finalWidth) / 2 + 'px';
