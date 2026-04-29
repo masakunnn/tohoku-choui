@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>潮位データ 東北</title>
+    <title>潮位データ-東北</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
     <style>
@@ -37,17 +37,18 @@
             cursor: url('c2.png') 9 2, auto;
             z-index: 1;
             border: none;
-            outline-offset: 0px;
-            transition: outline-color 0.0s;
-        }
-        .graph-box:not(.expanded):hover {
-            box-shadow: inset 0 0 0 5px #ffffff; 
-            cursor: url('c1.png') 5 2, auto;
+            outline: 5px solid transparent; 
+            outline-offset: -5px;
         }
 
-        .graph-box.expanded {
-            box-shadow: none !important; 
-            cursor: default;             
+        .graph-box:not(.expanded):hover {
+            outline: 5px solid #ffffff; 
+            cursor: url('c1.png') 5 2, auto;
+            transition: none !important; 
+        }
+
+        .graph-box:not(.expanded) {
+            transition: none !important; 
         }
         .graph-box.image-box:hover { 
             outline-color: transparent !important; 
@@ -788,11 +789,16 @@
                         ctx.restore();
                     },
                     scales: {
-                        x: { 
-                            type: 'linear', 
-                            min: xMinFixed, 
+                        x: {
+                            type: 'linear',
+                            min: xMinFixed,
                             max: xMaxFixed,
-                            grid: { color: 'rgba(255,255,255,0.1)', lineWidth: 8, drawTicks: true, tickColor: '#ffffff', tickLength: 30, tickWidth: 8 }, 
+                            offset: false,
+                            afterFit: function(axis) {
+                                axis.paddingLeft = 0;
+                                axis.paddingRight = 0;
+                            },
+                                                    grid: { color: 'rgba(255,255,255,0.1)', lineWidth: 8, drawTicks: true, tickColor: '#ffffff', tickLength: 30, tickWidth: 8 }, 
                             border: { display: true, color: '#ffffff', width: 8, dash: [15, 15], drawOnChartArea: true, hideOnEnd: true, z: 1 }, 
                             ticks: { 
                                 color: '#ffffff', 
@@ -820,6 +826,9 @@
                         },
                         y: { 
                             min: yMin, max: yMax, 
+                            afterFit: function(axis) {
+                                axis.width = 250;
+                            },
                             grid: { color: 'rgba(255,255,255,0.15)', lineWidth: 8, drawTicks: true, tickColor: '#ffffff', tickLength: 20, tickWidth: 8 }, 
                             border: { display: true, color: '#ffffff', width: 8, z: 1 }, 
                             ticks: { color: '#ffffff', font: { size: 70, family: CONFIG.fontName }, stepSize: 100, padding: 20, callback: function(value) { return value > labelMax ? null : value; } }
@@ -836,8 +845,9 @@
 
         } catch (e) { console.warn(e); }
     }
-
+    document.fonts.ready.then(function() {
     init();
+});
 </script>
 </body>
 </html>
