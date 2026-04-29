@@ -2,64 +2,58 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>潮位観測情報 - 東北ブロック</title>
+    <title>潮位データ 東北</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
     <style>
-        /* フォントの設定 */
         @font-face {
             font-family: 'UD-ShinGo-DeBold';
             src: url('A-OTF UD新ゴ Pr6N-DeBold.otf') format('opentype');
         }
 
-        /* 2. BIZ UD Pゴシックの設定（ファイルが同じフォルダにある前提） */
         @font-face {
             font-family: 'BIZUDPGothic-Bold';
             src: url('BIZUDPGothic-Bold.ttf') format('truetype');
         }
 
-        /* 全体設定 */
-        /* 変える必要がないところを勝手に変えたり省略あるいは削除するな！ */
         * { box-sizing: border-box; }
+        
         body { 
             background-color: #01162a; 
-            cursor: url('c1.png'), auto;
+            cursor: url('c1.png') 5 2, auto;
             margin: 0; 
             color: white; 
-            /* 左から順に優先されます */
             font-family: 'UD-ShinGo-DeBold', 'BIZUDPGothic-Bold', sans-serif; 
             overflow-y: scroll; 
         }
-        .grid-container { display: grid; grid-template-columns: repeat(4, 1fr); width: 85%; margin: 40px auto; gap: 10px 15px; }
+        .grid-container { display: grid; grid-template-columns: repeat(4, 1fr); width: 90%; margin: 40px auto; gap: 7px 10px; }
         
-        /* カードの設定 */
         .graph-box { 
             position: relative; 
             width: 100%; 
             aspect-ratio: 16 / 9; 
             background-color: #0f2742; 
             overflow: hidden; 
-            cursor: url('c2.png'), auto;
+            cursor: url('c2.png') 9 2, auto;
             z-index: 1;
             border: none;
-            outline: 8px solid transparent;
             outline-offset: 0px;
-            transition: outline-color 0.1s;
+            transition: outline-color 0.0s;
         }
-        .graph-box:hover { 
-            outline-color: #ffffff;
+        .graph-box:not(.expanded):hover {
+            box-shadow: inset 0 0 0 5px #ffffff; 
+            cursor: url('c1.png') 5 2, auto;
+        }
+
+        .graph-box.expanded {
+            box-shadow: none !important; 
+            cursor: default;             
         }
         .graph-box.image-box:hover { 
             outline-color: transparent !important; 
-            cursor: default !important; /* カーソルを指（ポインタ）にしない */
+            cursor: url('./c1.png') 5 2, auto !important;
         }
 
-        /* ツールチップ（吹き出し）のスタイル */
-        /* styleタグ内に追加または上書き */
-        /* --- ツールチップ（吹き出し）のスタイル（画像のデザインを再現） --- */
-        /* --- ツールチップ本体の縁取りを強化 --- */
-        /* --- ツールチップ本体 --- */
-        /* --- ツールチップ本体 --- */
         .custom-tooltip {
             position: absolute;
             background-color: rgba(243, 243, 243, 0.9); 
@@ -68,16 +62,15 @@
             border-radius: 0;
             z-index: 9999;
             font-family: 'UD-ShinGo-DeBold', sans-serif;
-            white-space: nowrap; /* これを追加 */
+            white-space: nowrap; 
             outline: 7px solid #1e2d32;
             transform-origin: top left;
             overflow: visible;
 
-            /* 点滅防止の最重要設定 */
             pointer-events: none !important; 
             opacity: 0;
             visibility: hidden;
-            display: block !important; /* displayの切り替えでチカチカさせない */
+            display: block !important; 
             transition: opacity 0.2s ease-out;
         }
 
@@ -86,7 +79,6 @@
             visibility: visible;
         }
 
-        /* ヘッダー部分 */
         .tooltip-time {
             background-color: #1e2d32;
             color: white;
@@ -97,45 +89,34 @@
             text-align: left;
             line-height: 1.2;
             
-            /* 境界線のノイズを消す */
             border: none;
             outline: none;
             display: block;
-            /* 下の要素との重なりを1px作って隙間を殺す */
             margin-bottom: -1px; 
         }
 
-        /* 各データ行のコンテナ */
         .tooltip-row {
             display: flex;
             align-items: center;
             font-size: 58px;
             padding: 20px 25px 0px 25px;
-            /* 背景色との境界で白線が出ないように調整 */
             background-color: #f3f3f3; 
         }
 
-        /* 凡例マーク（■）の共通スタイル */
         .tooltip-color-box {
-            width: 52px; /* 画像に合わせたサイズ */
+            width: 52px; 
             height: 52px;
-            margin-right: 18px; /* 文字との隙間 */
+            margin-right: 18px; 
             flex-shrink: 0;
-            box-sizing: border-box; /* ボーダーを含めたサイズ計算 */
+            box-sizing: border-box; 
         }
-        /* 「過去最高」用の点線マーク（□） */
         .tooltip-color-box.dashed {
-            background-color: transparent !important; /* 中は透明 */
-            border: 6px dashed #b103e1; /* 点線ボーダー */
+            background-color: transparent !important; 
+            border: 6px dashed #b103e1; 
         }
 
-        /* --- ツールチップ本体 --- */
-        /* --- ツールチップ本体 --- */
-        /* --- 修正箇所：ツールチップ全体に背景を塗る --- */
-        /* --- CSS修正：.custom-tooltip を探して書き換え --- */
         .custom-tooltip {
             position: absolute;
-            /* 背景色を rgba に変更（0.85は好みで 0.7〜0.9 の間で調整してください） */
             background-color: rgba(243, 243, 243, 0.9); 
             color: #1e2d32;
             padding: 0;
@@ -145,15 +126,13 @@
             display: none;
             font-family: 'UD-ShinGo-DeBold', sans-serif;
             outline: 7px solid #1e2d32;
-            outline-offset: -1px; /* 1px内側に食い込ませて隙間を殺す */
+            outline-offset: -1px; 
             transform-origin: top left;
             overflow: visible;
         }
-        /* 【背面】◀の「縁取り」部分 */
         .custom-tooltip::after {
             content: "";
             position: absolute;
-            /* 前面の白三角形より少し左に配置し、サイズをわずかに大きくする */
             left: -76px; 
             top: 50%;
             transform: translateY(-50%);
@@ -161,13 +140,11 @@
             width: 0;
             height: 0;
             border-style: solid;
-            /* 前面(20px/55px)より一回り大きく設定 */
             border-width: 28px 71px 28px 0; 
             border-color: transparent #1e2d32 transparent transparent;
-            z-index: -1; /* 白い三角形の背面に回る */
+            z-index: -1; 
         }
 
-        /* 【前面】◀の「白い中身」部分 */
         .custom-tooltip::before {
             content: "";
             position: absolute;
@@ -178,14 +155,12 @@
             height: 0;
             border-style: solid;
             border-width: 20px 55px 20px 0; 
-            /* border-color の2番目（右側）を本体と同じ色と透明度にする */
             border-color: transparent rgba(243, 243, 243, 0.85) transparent transparent;
             z-index: 1;
         }
         .tooltip-time, .tooltip-row, .tooltip-value-container {
-            line-height: 1.2; /* 文字の高さぴったりにする */
+            line-height: 1.2; 
         }
-        /* ヘッダー部分 */
         .tooltip-time {
             background-color: #1e2d32;
             color: white;
@@ -194,39 +169,36 @@
             text-align: left;
             border: none;
         }
-        /* --- CSS修正：中身の背景色を透明に統一 --- */
         .tooltip-row, 
         .tooltip-value-container {
             display: flex;
             align-items: center;
-            /* background-color: #f3f3f3; を削除または以下に変更 */
             background-color: transparent !important; 
             border: none;
         }
 
-        /* データエリアの左寄せ */
         .tooltip-row {
             display: flex;
             align-items: center;
             font-size: 60px;
-            padding: 0px 30px 0 30px; /* 左寄せに合わせて余白調整 */
+            padding: 0px 30px 0 30px; 
             background-color: transparent;
-            border: none; /* 境界線を消す */
+            border: none; 
         }
 
         .tooltip-value-container {
             text-align: right;
             background-color: transparent;
-            padding: 0 200px 30px 0px; /* 数字も左寄せ */
+            padding: 0 200px 30px 0px; 
             margin-top: -15px;
-            border: none; /* 境界線を消す */
+            border: none; 
         }
         .tooltip-time {
             font-size: 40px;
             margin-bottom: 35px;
             padding-bottom: 15px;
             text-align: left;
-            border: none; /* 境界線を消す */
+            border: none; 
         }
 
         .tooltip-row {
@@ -234,7 +206,7 @@
             align-items: center;
             font-size: 50px;
             margin: 5px 0;
-            border: none; /* 境界線を消す */
+            border: none; 
         }
 
         .tooltip-color-box {
@@ -259,12 +231,7 @@
             z-index: 2000;
             outline-color: transparent !important; 
             background-color: #0f2742;
-            cursor: url('c1.png'), auto;
-            box-shadow: 0 20px 80px rgba(0,0,0,0.8);
-            transition: top 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-                        left 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-                        width 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-                        height 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: url('c1.png') 5 2, auto;
             will-change: top, left, width, height;
         }
 
@@ -279,23 +246,18 @@
             top: 0; left: 0; 
             width: 3840px; height: 2160px; 
             transform-origin: 0 0; 
-            /* pointer-events: none; を削除または auto に */
             pointer-events: auto; 
             z-index: 10; 
             transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
         }
 
-/* ラベル類がマウスイベントを遮らないように個別設定 */
-.station-label, .agency-label, .legend-box {
-    pointer-events: none;
-}
+        .station-label, .agency-label, .legend-box {
+            pointer-events: none;
+        }
         
         .station-label { position: absolute; top: 120px; width: 100%; text-align: center; font-size: 154px; font-weight: 900; white-space: nowrap; line-height: 1; }
         .station-label::after { content: " 潮位"; }
 
-        /* 設置機関ラベルのスタイル */
-        /* 設置機関ラベルのスタイル */
-        /* 設置機関ラベルのスタイル */
         .agency-label { 
             position: absolute; 
             top: 1975px; 
@@ -309,13 +271,12 @@
             line-height: 1;
         }
         
-        /* グラフエリア：上端座標(top)を固定しつつ、下からの「持ち上げ余白」を確保 */
         .chart-layer { 
             position: absolute; 
             top: 418px; 
             left: 180px; 
             width: 3480px; 
-            height: 1400px; /* ここ自体の高さは変えず、内部のpaddingで背を削ります */
+            height: 1400px; 
         }
         
         canvas { 
@@ -348,7 +309,7 @@
             background-color: rgba(0, 0, 0, 0.85);
             z-index: 1000;
             opacity: 0;
-            transition: opacity 0.4s ease;
+            transition: opacity 0.3s ease;
         }
     </style>
 </head>
@@ -364,9 +325,9 @@
 
 <script>
     const CONFIG = {
-        marginRatio: 0.96   ,
+        marginRatio: 0.90   ,
         aspectRatio: 16/9,
-        animDuration: 450,
+        animDuration: 1000,
         fontName: "'UD-ShinGo-DeBold', 'BIZUDPGothic-Bold', sans-serif"
     };
 
@@ -400,10 +361,10 @@
     }
 
     function handleCardClick(el) {
-        if (expandedElement) return;
+        if (expandedElement || isAnimating) return;
         expandCard(el);
     }
-    let isAnimating = false; // 拡大中かどうかを判定するフラグ
+    let isAnimating = false; 
 
     function expandCard(el) {
         isAnimating = true;
@@ -415,11 +376,9 @@
         placeholderElement.className = 'placeholder';
         el.parentNode.insertBefore(placeholderElement, el);
 
-        // 画面サイズに基づいた動的なサイズ計算
         const viewportWidth = document.documentElement.clientWidth;
         const viewportHeight = window.innerHeight;
         
-        // 画面の90%の幅、もしくは高さの90%に収まる幅の、小さい方を採用
         let finalWidth = viewportWidth * CONFIG.marginRatio;
         if (finalWidth / CONFIG.aspectRatio > viewportHeight * CONFIG.marginRatio) {
             finalWidth = viewportHeight * CONFIG.marginRatio * CONFIG.aspectRatio;
@@ -443,17 +402,26 @@
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 scrim.style.opacity = '1';
-                
-                el.style.transition = 'all 0.45s cubic-bezier(0.16, 1, 0.3, 1)'; 
+                const duration = `${CONFIG.animDuration}ms`;
+                const easing = 'cubic-bezier(0.2, 1, 0.01, 1)';
+
+                el.style.transition = `all ${duration} ${easing}`;
+                scrim.style.transition = `opacity ${duration} ${easing}`;
+
+                const layer = el.querySelector('.scaling-layer');
+                if (layer) {
+                    layer.style.transition = `transform ${duration} ${easing}`;
+                    layer.style.transform = `scale(${finalWidth / 3840})`;
+                }
+
                 el.style.top = (viewportHeight - finalHeight) / 2 + 'px';
                 el.style.left = (viewportWidth - finalWidth) / 2 + 'px';
                 el.style.width = finalWidth + 'px';
                 el.style.height = finalHeight + 'px';
 
-                const layer = el.querySelector('.scaling-layer');
                 if (layer) layer.style.transform = `scale(${finalWidth / 3840})`;
                 setTimeout(() => {
-                    isAnimating = false; // アニメーション終了（CONFIG.animDurationに合わせて解除）
+                    isAnimating = false; 
                 }, CONFIG.animDuration);
                 
             });
@@ -461,57 +429,64 @@
     }
 
     function closeExpanded() {
-    if (!expandedElement) return;
+        if (!expandedElement || isAnimating) return;
+        isAnimating = true;
 
-    const el = expandedElement;
-    const scrim = document.getElementById('scrim');
-    const rect = placeholderElement.getBoundingClientRect();
+        const el = expandedElement;
+        const scrim = document.getElementById('scrim');
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const rect = placeholderElement.getBoundingClientRect();
 
-    // ツールチップを非表示にする（クラスを外すのみ）
-    document.querySelectorAll('.custom-tooltip').forEach(tooltip => {
-        tooltip.classList.remove('show');
-    });
+        const duration = `${CONFIG.animDuration}ms`;
+        const easing = 'cubic-bezier(0.2, 1, 0.01, 1)';
 
-    el.style.top = rect.top + 'px';
-    el.style.left = rect.left + 'px';
-    el.style.width = rect.width + 'px';
-    el.style.height = rect.height + 'px';
-
-    const layer = el.querySelector('.scaling-layer');
-    if (layer) layer.style.transform = `scale(${rect.width / 3840})`;
-
-    scrim.style.opacity = '0';
-
-    setTimeout(() => {
-        el.classList.remove('expanded');
         el.style.transition = 'none';
-        el.style.position = '';
-        el.style.top = ""; el.style.left = ""; el.style.width = ""; el.style.height = "";
-        el.style.margin = "";
-        el.style.zIndex = "";
-        scrim.style.display = 'none';
+        const currentTop = parseFloat(el.style.top);
+        const currentLeft = parseFloat(el.style.left);
 
-        if (placeholderElement) {
-            placeholderElement.parentNode.removeChild(placeholderElement);
-            placeholderElement = null;
-        }
-        expandedElement = null;
+        el.style.position = 'absolute';
+        el.style.top = (currentTop + scrollTop) + 'px';
+        el.style.left = currentLeft + 'px';
 
-        // --- 修正ポイント ---
-        document.querySelectorAll('.custom-tooltip').forEach(t => {
-            t.style.display = 'none';
-            t.style.opacity = ''; // インラインスタイルの opacity を消去してCSS側に任せる
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                el.style.transition = `all ${duration} ${easing}`;
+                scrim.style.transition = `opacity ${duration} ${easing}`;
+
+                const layer = el.querySelector('.scaling-layer');
+                if (layer) {
+                    layer.style.transition = `transform ${duration} ${easing}`;
+                    layer.style.transform = `scale(${rect.width / 3840})`;
+                }
+
+                el.style.top = (rect.top + scrollTop) + 'px';
+                el.style.left = rect.left + 'px';
+                el.style.width = rect.width + 'px';
+                el.style.height = rect.height + 'px';
+
+                scrim.style.opacity = '0';
+            });
         });
-    const canvas = el.querySelector('canvas');
-        if (canvas) {
-            const chartInstance = Chart.getChart(canvas); // Canvasからグラフのインスタンスを取得
-            if (chartInstance) {
-                chartInstance.draw(); // グラフを再描画して「手書きの線」を消去する
+
+        setTimeout(() => {
+            isAnimating = false;
+            el.classList.remove('expanded');
+            
+            el.style.position = '';
+            el.style.top = ''; 
+            el.style.left = ''; 
+            el.style.width = ''; 
+            el.style.height = ''; 
+            el.style.zIndex = '';
+            
+            if (placeholderElement) {
+                placeholderElement.parentNode.replaceChild(el, placeholderElement);
+                placeholderElement = null;
             }
-        }
-        updateScales();
-    }, CONFIG.animDuration);
-}
+            scrim.style.display = 'none';
+            expandedElement = null;
+        }, CONFIG.animDuration);
+    }
 
     async function init() {
         try {
@@ -522,10 +497,9 @@
 
             const grid = document.getElementById('tohoku-grid');
             
-            // --- マップカードのクリック無効化 ---
             const mapCard = document.getElementById('map-card');
             if (mapCard) {
-                mapCard.onclick = null; // クリックイベントを解除
+                mapCard.onclick = null; 
             }
 
             const now = new Date();
@@ -564,16 +538,15 @@
                 }
                 if (!stInfo) continue;
 
-                // 設置機関の上書き
-                if (stInfo.name === "久慈") stInfo.agency = "岩手県";
-                else if (stInfo.name === "宮古") stInfo.agency = "気象庁・岩手県";
-                else if (stInfo.name === "釜石") stInfo.agency = "海上保安庁・岩手県";
-                else if (stInfo.name === "大船渡") stInfo.agency = "気象庁・岩手県";
-                else if (stInfo.name === "鮎川") stInfo.agency = "気象庁・宮城県";
-                else if (stInfo.name === "石巻") stInfo.agency = "宮城県";
-                else if (stInfo.name === "仙台新港") stInfo.agency = "宮城県";
-                else if (stInfo.name === "小名浜") stInfo.agency = "気象庁・福島県";
-                else if (stInfo.name === "鹿島") stInfo.agency = "茨城県";
+                if (stInfo.name === "久慈") stInfo.agency = "気象庁・港湾局";
+                else if (stInfo.name === "宮古") stInfo.agency = "気象庁";
+                else if (stInfo.name === "釜石") stInfo.agency = "気象庁・海上保安庁";
+                else if (stInfo.name === "大船渡") stInfo.agency = "気象庁";
+                else if (stInfo.name === "鮎川") stInfo.agency = "気象庁";
+                else if (stInfo.name === "石巻") stInfo.agency = "気象庁・港湾局";
+                else if (stInfo.name === "仙台新港") stInfo.agency = "気象庁・港湾局";
+                else if (stInfo.name === "小名浜") stInfo.agency = "気象庁";
+                else if (stInfo.name === "鹿島") stInfo.agency = "気象庁・港湾局";
 
                 const entry = Object.values(nhkNames).find(item => item.station_name === stInfo.name);
                 const displayName = entry ? entry.nhk_name : stInfo.name;
@@ -618,12 +591,13 @@
             ]);
 
             const now = new Date();
+            const baseHour = now.getHours();
             const currentHourDecimal = now.getHours() + (now.getMinutes() / 60);
             const margin = 1.7;
-            const xMinFixed = currentHourDecimal - 4 - margin - 0.5;
-            const xMaxFixed = currentHourDecimal + 5 + margin - 0.2;
-            const plotStart = currentHourDecimal - 5.5 - 0.41;
-            const plotEnd = xMaxFixed - 0.35;
+            const xMinFixed = baseHour - 4 - margin - 0.62;
+            const xMaxFixed = baseHour + 5 + margin - 0.35;
+            const plotStart = baseHour - 5.5 - 0.51;
+            const plotEnd = xMaxFixed - 0.34;
 
             const obsData = [];
             const yValues = [];
@@ -640,7 +614,7 @@
                 const rawObsData = [];
                 obsRes.tide.forEach((v, i) => {
                     const h = i / itemsPerHour;
-                    if (v !== null && v !== undefined && v !== -9999 && h >= plotStart && h <= plotEnd) {
+                    if (v !== null && v !== undefined && v !== -9999 && h >= plotStart -0.0 && h <= plotEnd -0.00) {
                         rawObsData.push({ x: h, y: v });
                     }
                 });
@@ -661,7 +635,7 @@
             const todayAstro = astroRes?.tide?.[mmdd];
             if (todayAstro) {
                 todayAstro.forEach((v, i) => {
-                    if (v !== -9999 && i >= xMinFixed && i <= xMaxFixed) { 
+                    if (v !== -9999 && i >= xMinFixed  && i <= xMaxFixed) { 
                         astroData.push({ x: i, y: v }); yValues.push(v); 
                     }
                 });
@@ -717,114 +691,102 @@
                     layout: { padding: { bottom: 250 } },
                     plugins: { legend: { display: false }, annotation: { annotations }, tooltip: { enabled: false } },
                     onHover: (event, chartElement, chart) => {
-    // 自身のcanvasの親の親（.graph-box）が .expanded を持っているかチェック
-    const container = chart.canvas.closest('.graph-box');
-    if (!container || !container.classList.contains('expanded')) {
-        // 拡大していない時は、ツールチップが表示されていたら消す
-        const tooltipEl = document.getElementById(`tooltip-${st.jmaCode}`);
-        if (tooltipEl) {
-            tooltipEl.style.display = 'none';
-            tooltipEl.classList.remove('show');
-        }
-        return;
-    }
+                        const container = chart.canvas.closest('.graph-box');
+                        if (!container || !container.classList.contains('expanded') || isAnimating) {
+                            const tooltipEl = document.getElementById(`tooltip-${st.jmaCode}`);
+                            if (tooltipEl) {
+                                tooltipEl.style.display = 'none';
+                                tooltipEl.classList.remove('show');
+                            }
+                            return;
+                        }
 
-    const tooltipEl = document.getElementById(`tooltip-${st.jmaCode}`);
-    if (!tooltipEl) return;
+                        const tooltipEl = document.getElementById(`tooltip-${st.jmaCode}`);
+                        if (!tooltipEl) return;
 
-    const { left, right, top, bottom } = chart.chartArea;
-    const isInside = event.x >= (left + 8) && event.x <= (right - 8) && event.y >= top && event.y <= (bottom - 2);
+                        const { left, right, top, bottom } = chart.chartArea;
+                        const isInside = event.x >= (left + 82) && event.x <= (right - 90) && event.y >= top && event.y <= (bottom - 2);
 
-    if (!isInside) {
-        tooltipEl.style.display = 'none';
-        tooltipEl.classList.remove('show');
-        chart.draw(); 
-        return;
-    }
+                        if (!isInside) {
+                            tooltipEl.style.display = 'none';
+                            tooltipEl.classList.remove('show');
+                            chart.draw(); 
+                            return;
+                        }
 
-    const timeVal = chart.scales.x.getValueForPixel(event.x);
+                        const timeVal = chart.scales.x.getValueForPixel(event.x);
 
-    // 線上の値を補間して取得する関数
-    const getValOnLine = (datasetIndex) => {
-        const dataset = chart.data.datasets[datasetIndex].data;
-        if (!dataset || dataset.length === 0) return null;
-        
-        // データの範囲外ならnull
-        if (timeVal < dataset[0].x || timeVal > dataset[dataset.length - 1].x) return null;
+                        const getValOnLine = (datasetIndex) => {
+                            const dataset = chart.data.datasets[datasetIndex].data;
+                            if (!dataset || dataset.length === 0) return null;
+                            if (timeVal < dataset[0].x || timeVal > dataset[dataset.length - 1].x) return null;
 
-        // 現在の時刻(timeVal)を挟む前後のデータ点を探す
-        let prev = dataset[0], next = dataset[dataset.length - 1];
-        for (let i = 0; i < dataset.length - 1; i++) {
-            if (dataset[i].x <= timeVal && dataset[i + 1].x >= timeVal) {
-                prev = dataset[i];
-                next = dataset[i + 1];
-                break;
-            }
-        }
-        // 線形補間でY座標を計算（これで丸が線に吸い付く）
-        const t = (timeVal - prev.x) / (next.x - prev.x);
-        return prev.y + t * (next.y - prev.y);
-    };
+                            let prev = dataset[0], next = dataset[dataset.length - 1];
+                            for (let i = 0; i < dataset.length - 1; i++) {
+                                if (dataset[i].x <= timeVal && dataset[i + 1].x >= timeVal) {
+                                    prev = dataset[i];
+                                    next = dataset[i + 1];
+                                    break;
+                                }
+                            }
+                            const t = (timeVal - prev.x) / (next.x - prev.x);
+                            return prev.y + t * (next.y - prev.y);
+                        };
 
-    const obsValAtLine = getValOnLine(0);   // 実況値の交点
-    const astroValAtLine = getValOnLine(1); // 天文潮位の交点
+                        const obsValAtLine = getValOnLine(0);   
+                        const astroValAtLine = getValOnLine(1); 
 
-    let rows = [];
-    if (st.warning !== null) rows.push({ val: st.warning, html: `<div class="tooltip-row"><div class="tooltip-color-box" style="background:#d50200;"></div>高潮警報基準</div><div class="tooltip-value-container"><span class="tooltip-value">${st.warning}</span><span class="tooltip-unit">cm</span></div>` });
-    if (st.record !== null) rows.push({ val: st.record, html: `<div class="tooltip-row"><div class="tooltip-color-box dashed"></div>過去最高</div><div class="tooltip-value-container"><span class="tooltip-value">${st.record}</span><span class="tooltip-unit">cm</span></div>` });
-    if (st.advisory !== null) rows.push({ val: st.advisory, html: `<div class="tooltip-row"><div class="tooltip-color-box" style="background:#f6f10d;"></div>高潮注意報基準</div><div class="tooltip-value-container"><span class="tooltip-value">${st.advisory}</span><span class="tooltip-unit">cm</span></div>` });
-    
-    // 天文潮位を計算された値で更新
-    if (astroValAtLine !== null) {
-        rows.push({ val: Math.round(astroValAtLine), html: `<div class="tooltip-row"><div class="tooltip-color-box" style="background:#00c602;"></div>天文潮位</div><div class="tooltip-value-container"><span class="tooltip-value">${Math.round(astroValAtLine)}</span><span class="tooltip-unit">cm</span></div>` });
-    }
-    
-    if (obsValAtLine !== null) {
-        rows.push({ val: Math.round(obsValAtLine), html: `<div class="tooltip-row"><div class="tooltip-color-box" style="background:#46ecf1;"></div>潮位</div><div class="tooltip-value-container"><span class="tooltip-value">${Math.round(obsValAtLine)}</span><span class="tooltip-unit">cm</span></div>` });
-    }
-    
-    const targetDate = new Date();
-    targetDate.setHours(0, 0, 0, 0); 
-    targetDate.setTime(targetDate.getTime() + (timeVal * 60 * 60 * 1000));
-    const timeStr = `${targetDate.getMonth() + 1}月${targetDate.getDate()}日${targetDate.getHours()}時${String(targetDate.getMinutes()).padStart(2, '0')}分`;
-    
-    rows.sort((a, b) => b.val - a.val);
-    tooltipEl.innerHTML = `<div class="tooltip-time">${timeStr}</div>` + rows.map(r => r.html).join('');
-    tooltipEl.style.display = 'block';
-    tooltipEl.classList.add('show');
+                        let rows = [];
+                        if (st.warning !== null) rows.push({ val: st.warning, html: `<div class="tooltip-row"><div class="tooltip-color-box" style="background:#d50200;"></div>高潮警報基準</div><div class="tooltip-value-container"><span class="tooltip-value">${st.warning}</span><span class="tooltip-unit">cm</span></div>` });
+                        if (st.record !== null) rows.push({ val: st.record, html: `<div class="tooltip-row"><div class="tooltip-color-box dashed"></div>過去最高</div><div class="tooltip-value-container"><span class="tooltip-value">${st.record}</span><span class="tooltip-unit">cm</span></div>` });
+                        if (st.advisory !== null) rows.push({ val: st.advisory, html: `<div class="tooltip-row"><div class="tooltip-color-box" style="background:#f6f10d;"></div>高潮注意報基準</div><div class="tooltip-value-container"><span class="tooltip-value">${st.advisory}</span><span class="tooltip-unit">cm</span></div>` });
+                        
+                        if (astroValAtLine !== null) {
+                            rows.push({ val: Math.round(astroValAtLine), html: `<div class="tooltip-row"><div class="tooltip-color-box" style="background:#00c602;"></div>天文潮位</div><div class="tooltip-value-container"><span class="tooltip-value">${Math.round(astroValAtLine)}</span><span class="tooltip-unit">cm</span></div>` });
+                        }
+                        
+                        if (obsValAtLine !== null) {
+                            rows.push({ val: Math.round(obsValAtLine), html: `<div class="tooltip-row"><div class="tooltip-color-box" style="background:#46ecf1;"></div>潮位</div><div class="tooltip-value-container"><span class="tooltip-value">${Math.round(obsValAtLine)}</span><span class="tooltip-unit">cm</span></div>` });
+                        }
+                        
+                        const targetDate = new Date();
+                        targetDate.setHours(0, 0, 0, 0); 
+                        targetDate.setTime(targetDate.getTime() + (timeVal * 60 * 60 * 1000));
+                        const timeStr = `${targetDate.getMonth() + 1}月${targetDate.getDate()}日${targetDate.getHours()}時${String(targetDate.getMinutes()).padStart(2, '0')}分`;
+                        
+                        rows.sort((a, b) => b.val - a.val);
+                        tooltipEl.innerHTML = `<div class="tooltip-time">${timeStr}</div>` + rows.map(r => r.html).join('');
+                        tooltipEl.style.display = 'block';
+                        tooltipEl.classList.add('show');
 
-    // ツールチップの位置固定（右側に表示）
-    tooltipEl.style.left = (event.x + 275) + 'px'; 
-    tooltipEl.style.top = '655px';
+                        tooltipEl.style.left = (event.x + 275) + 'px'; 
+                        tooltipEl.style.top = '655px';
 
-    chart.draw();
-    const { ctx } = chart;
-    ctx.save();
-    
-    // 垂直線の描画
-    ctx.beginPath(); ctx.lineWidth = 8; ctx.strokeStyle = '#ffffff'; 
-    ctx.moveTo(event.x, top); ctx.lineTo(event.x, bottom); ctx.stroke();
+                        chart.draw();
+                        const { ctx } = chart;
+                        ctx.save();
+                        
+                        ctx.beginPath(); ctx.lineWidth = 8; ctx.strokeStyle = '#ffffff'; 
+                        ctx.moveTo(event.x, top); ctx.lineTo(event.x, bottom); ctx.stroke();
 
-    // 交点に丸を描画する関数
-    const drawCircle = (val, color, forceDisplay = false) => {
-        if (val === null || isNaN(val)) return;
-        const yPixel = chart.scales.y.getPixelForValue(val);
-        if (!forceDisplay && (yPixel < top || yPixel > bottom)) return; 
-        ctx.beginPath(); ctx.arc(event.x, yPixel, 18, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff'; ctx.fill();
-        ctx.beginPath(); ctx.arc(event.x, yPixel, 12, 0, Math.PI * 2);
-        ctx.fillStyle = color; ctx.fill();
-    };
+                        const drawCircle = (val, color, forceDisplay = false) => {
+                            if (val === null || isNaN(val)) return;
+                            const yPixel = chart.scales.y.getPixelForValue(val);
+                            if (!forceDisplay && (yPixel < top || yPixel > bottom)) return; 
+                            ctx.beginPath(); ctx.arc(event.x, yPixel, 18, 0, Math.PI * 2);
+                            ctx.fillStyle = '#ffffff'; ctx.fill();
+                            ctx.beginPath(); ctx.arc(event.x, yPixel, 12, 0, Math.PI * 2);
+                            ctx.fillStyle = color; ctx.fill();
+                        };
 
-    // 計算した交点の値を使って丸を描画（これで線に沿って動く）
-    drawCircle(obsValAtLine, '#46ecf1', false);
-    drawCircle(astroValAtLine, '#00c602', false);
-    if (st.warning !== null) drawCircle(st.warning, '#d50200', true);
-    if (st.record !== null) drawCircle(st.record, '#b103e1', true);
-    if (st.advisory !== null) drawCircle(st.advisory, '#f6f10d', true);
-    
-    ctx.restore();
-},
+                        drawCircle(obsValAtLine, '#46ecf1', false);
+                        drawCircle(astroValAtLine, '#00c602', false);
+                        if (st.warning !== null) drawCircle(st.warning, '#d50200', true);
+                        if (st.record !== null) drawCircle(st.record, '#b103e1', true);
+                        if (st.advisory !== null) drawCircle(st.advisory, '#f6f10d', true);
+                        
+                        ctx.restore();
+                    },
                     scales: {
                         x: { 
                             type: 'linear', 
@@ -840,7 +802,6 @@
                                     if (Math.abs(v - Math.round(v)) > 0.05) return '';
                                     let hour = Math.round(v);
                                     
-                                    // 日付の計算
                                     const dateObj = new Date(now);
                                     dateObj.setHours(hour, 0, 0, 0);
                                     const d = dateObj.getDate();
@@ -849,9 +810,6 @@
                                     while (displayHour < 0) displayHour += 24;
                                     while (displayHour >= 24) displayHour -= 24;
 
-                                    // 1. 最初の目盛り
-                                    // 2. 0時（日付が変わるタイミング）
-                                    // の場合に日付を下に付ける
                                     if (index === 0 || displayHour === 0) {
                                         return [displayHour + '時', d + '日'];
                                     }
@@ -878,6 +836,7 @@
 
         } catch (e) { console.warn(e); }
     }
+
     init();
 </script>
 </body>
