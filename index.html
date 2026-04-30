@@ -714,7 +714,7 @@
                         if (!tooltipEl) return;
 
                         const { left, right, top, bottom } = chart.chartArea;
-                        const isInside = event.x >= (left + 82) && event.x <= (right - 90) && event.y >= top && event.y <= (bottom - 2);
+                        const isInside = event.x >= (left + 82) && event.x <= (right - 90) && event.y >= top && event.y <= (bottom - 15);
 
                         if (!isInside) {
                             tooltipEl.style.display = 'none';
