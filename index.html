@@ -627,7 +627,7 @@
                         rawObsData.push({ x: h, y: v });
                     }
                 });
-                const windowSize = itemsPerHour >= 30 ? 15 : 3;
+                const windowSize = itemsPerHour >= 30 ? 4 : 2;
                 const halfWindow = Math.floor(windowSize / 2);
                 for (let i = 0; i < rawObsData.length; i++) {
                     let sum = 0, count = 0;
@@ -714,7 +714,7 @@
                         if (!tooltipEl) return;
 
                         const { left, right, top, bottom } = chart.chartArea;
-                        const isInside = event.x >= (left + 82) && event.x <= (right - 90) && event.y >= top && event.y <= (bottom - 15);
+                        const isInside = event.x >= (left + 82) && event.x <= (right - 90) && event.y >= top && event.y <= (bottom - 2);
 
                         if (!isInside) {
                             tooltipEl.style.display = 'none';
